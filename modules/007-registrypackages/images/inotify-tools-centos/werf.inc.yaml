@@ -1,4 +1,4 @@
-{{- $version := dict "7" "3.14-9" "8" "3.14-19" }}
+{{- $version := dict "7" "3.14-9" "8" "3.14-19" "9" "3.22.1.0-1" }}
 {{- range $centos_version, $_ := .CandiVersionMap.bashible.centos }}
   {{- $image_version := index $version $centos_version | replace "." "-" }}
 ---
