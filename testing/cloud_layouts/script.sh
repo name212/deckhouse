@@ -610,7 +610,9 @@ function main() {
   case "${1}" in
     run-test)
       run-test || { exitCode=$? && >&2 echo "Cloud test failed or aborted." ;}
-      change-deckhouse-version-and-run-test || { exitCode=$? && >&2 echo "Cloud test failed or aborted." ;}
+      if [[ $exitCode -eq 0 ]]; then
+        change-deckhouse-version-and-run-test || { exitCode=$? && >&2 echo "Cloud test failed or aborted." ;}
+      fi
     ;;
 
     cleanup)
@@ -620,7 +622,9 @@ function main() {
     "")
       # default action is bootstrap + cleanup
       run-test || { exitCode=$? && >&2 echo "Cloud test failed or aborted." ;}
-      change-deckhouse-version-and-run-test || { exitCode=$? && >&2 echo "Cloud test failed or aborted." ;}
+      if [[ $exitCode -eq 0 ]]; then
+        change-deckhouse-version-and-run-test || { exitCode=$? && >&2 echo "Cloud test failed or aborted." ;}
+      fi
       # Ignore cleanup exit code, return exit code of bootstrap phase.
       cleanup || true
     ;;
