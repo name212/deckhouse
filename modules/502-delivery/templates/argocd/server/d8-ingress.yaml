@@ -39,7 +39,7 @@ spec:
           service:
             name: argocd-server
             port:
-              name: https
+              name: http
   {{- if eq (include "helm_lib_module_https_mode" .) "CertManager" }}
 ---
 apiVersion: cert-manager.io/v1
