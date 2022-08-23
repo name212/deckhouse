@@ -15,7 +15,7 @@
 # limitations under the License.
 
 NEW_BRANCH=main
-ssh_command="ssh -o StrictHostKeyChecking=no"
+ssh_command="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
 
 usage=$(cat <<EOF
 Usage:
@@ -300,6 +300,7 @@ function run-test() {
   wait_cluster_ready "$ssh_private_key_path" "$ssh_user" "${master_ip}"
 }
 
+
 function change-deckhouse-version-and-run-test() {
   if [[ $NEW_BRANCH == "" ]] || [[ "$NEW_BRANCH" == "$DEV_BRANCH" ]]; then
     return 0
@@ -342,7 +343,7 @@ function bootstrap_static() {
 
   >&2 echo 'Fetch registration script ...'
   for ((i=0; i<10; i++)); do
-    bootstrap_system="$($ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l << "ENDSSH"
+    bootstrap_system="$($ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash << "ENDSSH"
 set -Eeuo pipefail
 kubectl -n d8-cloud-instance-manager get secret manual-bootstrap-for-system -o json | jq -r '.data."bootstrap.sh"'
 ENDSSH
@@ -358,7 +359,7 @@ ENDSSH
 
   # shellcheck disable=SC2087
   # Node reboots in bootstrap process, so ssh exits with error code 255. It's normal, so we use || true to avoid script fail.
-  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$system_ip" sudo -i /bin/bash -l <<ENDSSH || true
+  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$system_ip" sudo -i /bin/bash <<ENDSSH || true
 set -Eeuo pipefail
 base64 -d <<< "$bootstrap_system" | bash
 ENDSSH
@@ -366,7 +367,7 @@ ENDSSH
   registration_failed=
   >&2 echo 'Waiting until Node registration finishes ...'
   for ((i=1; i<=10; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l <<"ENDSSH"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<"ENDSSH"; then
 set -Eeuo pipefail
 kubectl get nodes
 kubectl get nodes -o json | jq -re '.items | length > 0' >/dev/null
@@ -409,7 +410,7 @@ function bootstrap() {
 
   >&2 echo 'Waiting until Machine provisioning finishes ...'
   for ((i=1; i<=20; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l <<"ENDSSH"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<"ENDSSH"; then
 set -Eeuo pipefail
 kubectl -n d8-cloud-instance-manager get machines
 kubectl -n d8-cloud-instance-manager get machine -o json | jq -re '.items | length > 0' >/dev/null
@@ -437,7 +438,8 @@ ENDSSH
 #  - master_ip
 #  - branch
 function change_deckhouse_image() {
-  if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l <<ENDSSH; then
+  >&2 echo "Change Deckhouse image to $DEV_BRANCH."
+  if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<ENDSSH; then
 set -Eeuo pipefail
 kubectl -n d8-system set image deployment/deckhouse deckhouse=dev-registry.deckhouse.io/sys/deckhouse-oss:${DEV_BRANCH}
 ENDSSH
@@ -454,7 +456,8 @@ END_SCRIPT
 
   testRunAttempts=5
   for ((i=1; i<=$testRunAttempts; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l <<<"${testScript}"; then
+    >&2 echo "Check Deckhouse pod readiness."
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<<"${testScript}"; then
       test_failed=""
       break
     else
@@ -568,7 +571,7 @@ END_SCRIPT
 
   testRunAttempts=5
   for ((i=1; i<=$testRunAttempts; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l <<<"${testScript}"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<<"${testScript}"; then
       test_failed=""
       break
     else
@@ -579,7 +582,7 @@ END_SCRIPT
   done
 
   >&2 echo "Fetch Deckhouse logs after test ..."
-  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash -l> "$cwd/deckhouse.json.log" <<"ENDSSH"
+  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash > "$cwd/deckhouse.json.log" <<"ENDSSH"
 kubectl -n d8-system logs deploy/deckhouse
 ENDSSH
 
