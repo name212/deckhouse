@@ -343,7 +343,7 @@ function bootstrap_static() {
 
   >&2 echo 'Fetch registration script ...'
   for ((i=0; i<10; i++)); do
-    bootstrap_system="$($ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash << "ENDSSH"
+    bootstrap_system="$($ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash << "ENDSSH"
 set -Eeuo pipefail
 kubectl -n d8-cloud-instance-manager get secret manual-bootstrap-for-system -o json | jq -r '.data."bootstrap.sh"'
 ENDSSH
@@ -359,7 +359,7 @@ ENDSSH
 
   # shellcheck disable=SC2087
   # Node reboots in bootstrap process, so ssh exits with error code 255. It's normal, so we use || true to avoid script fail.
-  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$system_ip" sudo -i /bin/bash <<ENDSSH || true
+  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$system_ip" sudo /bin/bash <<ENDSSH || true
 set -Eeuo pipefail
 base64 -d <<< "$bootstrap_system" | bash
 ENDSSH
@@ -367,7 +367,7 @@ ENDSSH
   registration_failed=
   >&2 echo 'Waiting until Node registration finishes ...'
   for ((i=1; i<=10; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<"ENDSSH"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash <<"ENDSSH"; then
 set -Eeuo pipefail
 kubectl get nodes
 kubectl get nodes -o json | jq -re '.items | length > 0' >/dev/null
@@ -410,7 +410,7 @@ function bootstrap() {
 
   >&2 echo 'Waiting until Machine provisioning finishes ...'
   for ((i=1; i<=20; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<"ENDSSH"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash <<"ENDSSH"; then
 set -Eeuo pipefail
 kubectl -n d8-cloud-instance-manager get machines
 kubectl -n d8-cloud-instance-manager get machine -o json | jq -re '.items | length > 0' >/dev/null
@@ -439,17 +439,17 @@ ENDSSH
 #  - branch
 function change_deckhouse_image() {
   >&2 echo "Change Deckhouse image to $DEV_BRANCH."
-  if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<ENDSSH; then
+  if ! $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash <<ENDSSH; then
 set -Eeuo pipefail
 kubectl -n d8-system set image deployment/deckhouse deckhouse=dev-registry.deckhouse.io/sys/deckhouse-oss:${DEV_BRANCH}
 ENDSSH
-    return 0
-  fi
     >&2 echo "Cannot change deckhouse image to ${DEV_BRANCH}."
     return 1
+  fi
 
   testScript=$(cat <<"END_SCRIPT"
 set -Eeuo pipefail
+kubectl -n d8-system get pods -l app=deckhouse
 [[ "$(kubectl -n d8-system get pods -l app=deckhouse -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}')" ==  "True" ]]
 END_SCRIPT
 )
@@ -457,7 +457,7 @@ END_SCRIPT
   testRunAttempts=5
   for ((i=1; i<=$testRunAttempts; i++)); do
     >&2 echo "Check Deckhouse pod readiness."
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<<"${testScript}"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash <<<"${testScript}"; then
       test_failed=""
       break
     else
@@ -571,7 +571,7 @@ END_SCRIPT
 
   testRunAttempts=5
   for ((i=1; i<=$testRunAttempts; i++)); do
-    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash <<<"${testScript}"; then
+    if $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash <<<"${testScript}"; then
       test_failed=""
       break
     else
@@ -582,7 +582,7 @@ END_SCRIPT
   done
 
   >&2 echo "Fetch Deckhouse logs after test ..."
-  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo -i /bin/bash > "$cwd/deckhouse.json.log" <<"ENDSSH"
+  $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo /bin/bash > "$cwd/deckhouse.json.log" <<"ENDSSH"
 kubectl -n d8-system logs deploy/deckhouse
 ENDSSH
 
