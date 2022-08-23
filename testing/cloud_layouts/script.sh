@@ -438,12 +438,12 @@ ENDSSH
 #  - master_ip
 #  - branch
 function change_deckhouse_image() {
-  >&2 echo "Change Deckhouse image to $DEV_BRANCH."
+  >&2 echo "Change Deckhouse image to $NEW_BRANCH."
   if ! $ssh_command -i "$ssh_private_key_path" "$ssh_user@$master_ip" sudo su -c /bin/bash <<ENDSSH; then
 set -Eeuo pipefail
-kubectl -n d8-system set image deployment/deckhouse deckhouse=dev-registry.deckhouse.io/sys/deckhouse-oss:${DEV_BRANCH}
+kubectl -n d8-system set image deployment/deckhouse deckhouse=dev-registry.deckhouse.io/sys/deckhouse-oss:${NEW_BRANCH}
 ENDSSH
-    >&2 echo "Cannot change deckhouse image to ${DEV_BRANCH}."
+    >&2 echo "Cannot change deckhouse image to ${NEW_BRANCH}."
     return 1
   fi
 
