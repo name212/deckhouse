@@ -41,3 +41,13 @@ bb-is-debian-version?() {
     return 1
   fi
 }
+
+bb-is-distro-like?() {
+  local DISTRO_LIKE=$1
+  source /etc/os-release
+  if grep -q " ${DISTRO_LIKE} " <<< " $ID $ID_LIKE "; then
+    return 0
+  else
+    return 1
+  fi
+}
