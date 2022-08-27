@@ -1,0 +1,7 @@
+docs:
+  fixes:
+    - summary: Fixed some typos in the documentation.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2352
+    - summary: Added a second option to getting an etcd leader.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2339
+
