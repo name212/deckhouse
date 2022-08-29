@@ -1,0 +1,60 @@
+candi:
+  features:
+    - summary: Add an `additionalRolePolicies` parameter to AWSClusterConfiguration (#1005)
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2256
+    - summary: Add support for the kubernetes 1.24 version
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2210
+    - summary: >-
+        Set `maxAllowed` and `minAllowed` to all VPA objects. Set resources requests for all
+        controllers if VPA is off.   Added `global.modules.resourcesRequests.controlPlane` values.
+        `global.modules.resourcesRequests.EveryNode` and
+        `global.modules.resourcesRequests.masterNode` values are deprecated.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/1918
+      impact: All of the controllers will be restarted.
+  fixes:
+    - summary: |-
+        Fix helm image template.
+        Fix cloud-provider-gcp csi-node template.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2340
+docs:
+  fixes:
+    - summary: Add `api.` domain into a hosts lists in the getting started.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2354
+    - summary: Minor fix of markup in the GCP getting started steps.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2274
+ingress-nginx:
+  features:
+    - summary: Change default ingress nginx controller version to 1.1
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2267
+      impact: >-
+        All ingress nginx controllers with not-specified version (0.33) will restart and upgrade to
+        1.1
+  fixes:
+    - summary: Change defaultControllerVersion without deckhouse reboot
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2338
+log-shipper:
+  features:
+    - summary: Refactor transforms composition, improve efficiency and fix destination transforms.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2050
+  fixes:
+    - summary: Rewrite Elasticsearch dedot rule in VRL to improve performance.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2192
+    - summary: Prevent Vector from stopping logs processing if Kubernetes API server was restarted.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2192
+    - summary: Fix memory leak for internal metrics.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2192
+monitoring-kubernetes:
+  features:
+    - summary: Add nodes count panel to the Nodes dashboard.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2196
+node-manager:
+  fixes:
+    - summary: Change cluster autoscaler timeouts to avoid node flapping
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2279
+testing:
+  fixes:
+    - summary: Fix doc validation file filter
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2336
+    - summary: Fixes the flakiness of matrix tests.
+      pull_request: https://github.com/deckhouse/deckhouse/pull/2335
+
