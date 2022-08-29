@@ -10,9 +10,9 @@
 - name: VIRT_LAUNCHER_IMAGE
   value: "{{ $.Values.global.modulesImages.registry }}:{{ $.Values.global.modulesImages.tags.kubevirt.virtLauncher }}"
 - name: VIRT_EXPORTPROXY_IMAGE
-  value: todo
+  value: "{{ $.Values.global.modulesImages.registry }}:{{ $.Values.global.modulesImages.tags.kubevirt.exporterProxy }}"
 - name: VIRT_EXPORTSERVER_IMAGE
-  value: todo
+  value: "{{ $.Values.global.modulesImages.registry }}:{{ $.Values.global.modulesImages.tags.kubevirt.exporterServer }}"
 {{- end }}
 ---
 apiVersion: apps/v1
