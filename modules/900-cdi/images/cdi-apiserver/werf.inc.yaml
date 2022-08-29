@@ -10,4 +10,6 @@ import:
   before: setup
 # Source https://github.com/kubevirt/containerized-data-importer/blob/main/cmd/cdi-apiserver/BUILD.bazel
 docker:
-  ENTRYPOINT: ["/usr/bin/virt-launcher"]
+  ENTRYPOINT: ["/usr/bin/cdi-apiserver", "-alsologtostderr"]
+  USER: 1001
+  WORKDIR: /home/cdi-apiserver

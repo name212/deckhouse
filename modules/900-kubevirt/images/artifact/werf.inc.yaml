@@ -3,7 +3,7 @@
 {{- $version := "0.55.0" }}
 
 artifact: {{ $.ModuleName }}/{{ $.ImageName }}
-from: quay.io/kubevirt/builder:2206141426-2d31aa580
+from: {{ $builderImage }}
 git:
   - add: /modules/900-{{ $.ModuleName }}/images/{{ $.ImageName }}
     to: /
@@ -15,9 +15,11 @@ git:
     - unpack-bundle.sh
 shell:
   setup:
-  - git clone --branch v{{ $version }} https://github.com/kubevirt/kubevirt /kubevirt
-  - git -C /kubevirt apply /patches/*.patch
-  - mkdir -p /kubevirt/_out
-  - make -C /kubevirt bazel-build-image-bundle KUBEVIRT_RUN_UNNESTED=true
-  - tar --one-top-level -xf /kubevirt/_out/virt-components-bundle.tar
+  - git clone https://github.com/kubevirt/kubevirt /kubevirt
+  - cd /kubevirt
+  - git checkout v{{ $version }}
+  - git apply /patches/*.patch
+  - mkdir -p _out
+  - make bazel-build-image-bundle KUBEVIRT_RUN_UNNESTED=true
+  - tar -C / --one-top-level -xf /kubevirt/_out/virt-components-bundle.tar
   - mkdir -p /images && cd /images && /unpack-bundle.sh /virt-components-bundle/

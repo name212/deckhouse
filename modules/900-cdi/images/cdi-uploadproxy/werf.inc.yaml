@@ -8,6 +8,8 @@ import:
   - 'sys'
   to: /
   before: setup
-# Source https://github.com/kubevirt/containerized-data-importer/blob/main/cmd/cdi-apiserver/BUILD.bazel
+# Source https://github.com/kubevirt/containerized-data-importer/blob/main/cmd/cdi-uploadproxy/BUILD.bazel
 docker:
-  ENTRYPOINT: ["/usr/bin/virt-launcher"]
+  ENTRYPOINT: ["/usr/bin/cdi-uploadproxy", "-alsologtostderr"]
+  USER: 1001
+  WORKDIR: /home/cdi-uploadproxy
