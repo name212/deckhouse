@@ -2,7 +2,7 @@
 {{- /* returns image name */ -}}
 {{- define "helm_lib_module_image" }}
   {{- $context := index . 0 }}
-  {{- $containerName := index . 1 }}
+  {{- $containerName := index . 1 | trimAll "\"" }}
   {{- $moduleName := $context.Chart.Name | replace "-" "_" | camelcase | untitle }}
 
   {{- /* imageHash default value for tests is "imageHash" */ -}}
@@ -15,7 +15,7 @@
 {{- /* returns image name from common module */ -}}
 {{- define "helm_lib_module_common_image" }}
   {{- $context := index . 0 }}
-  {{- $containerName := index . 1 }}
+  {{- $containerName := index . 1 | trimAll "\"" }}
 
   {{- /* imageHash default value for tests is "imageHash" */ -}}
   {{- $imageHash := index $context.Values.global.modulesImages.tags "common" $containerName | default "imageHash" }}
