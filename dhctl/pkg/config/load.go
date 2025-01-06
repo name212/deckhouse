@@ -187,6 +187,18 @@ func newOnceSchemaStore(schemasDir []string) *SchemaStore {
 	return store
 }
 
+func (s *SchemaStore) GetOrError(index *SchemaIndex) (*spec.Schema, error) {
+	if ss, ok := s.cache[*index]; ok {
+		return ss, nil
+	}
+
+	return nil, fmt.Errorf("Schema index not found in schema store")
+}
+
+func (s *SchemaStore) ModuleConfigSchema(name string) *spec.Schema {
+	return s.moduleConfigsCache[name]
+}
+
 func (s *SchemaStore) Get(index *SchemaIndex) *spec.Schema {
 	return s.cache[*index]
 }

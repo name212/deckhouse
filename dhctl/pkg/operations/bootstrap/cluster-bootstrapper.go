@@ -17,7 +17,12 @@ package bootstrap
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"math/rand/v2"
+	"os"
+	"path"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,6 +46,8 @@ import (
 	"github.com/deckhouse/deckhouse/dhctl/pkg/template"
 	"github.com/deckhouse/deckhouse/dhctl/pkg/terminal"
 	"github.com/deckhouse/deckhouse/dhctl/pkg/terraform"
+	"github.com/deckhouse/deckhouse/dhctl/pkg/ui"
+	uistate "github.com/deckhouse/deckhouse/dhctl/pkg/ui/state"
 	"github.com/deckhouse/deckhouse/dhctl/pkg/util/retry"
 )
 
@@ -161,7 +168,49 @@ func (b *ClusterBootstrapper) applyParams() (func(), error) {
 	return restoreFunc, nil
 }
 
+func initSSHFromUIState(state uistate.SSHState) error {
+	app.SSHUser = state.User
+
+	if state.BastionUser != "" {
+		app.SSHBastionUser = state.BastionUser
+	}
+
+	if state.BastionHost != "" {
+		app.SSHBastionHost = state.BastionHost
+	}
+
+	if state.Host != "" {
+		app.SSHHosts = []session.Host{{Host: state.Host}}
+	}
+
+	privKeyPrefix := strconv.Itoa(rand.IntN(math.MaxInt32))
+	privKeyPath := path.Join(app.TmpDirName, privKeyPrefix+".private.key")
+
+	if err := os.WriteFile(privKeyPath, []byte(state.Private), 0600); err != nil {
+		return err
+	}
+
+	app.SSHPrivateKeys = []string{privKeyPath}
+
+	return nil
+}
+
 func (b *ClusterBootstrapper) Bootstrap() error {
+	configYAML := ""
+
+	if len(app.ConfigPaths) == 0 {
+		_ = config.NewSchemaStore()
+		uiApp := ui.NewApp()
+		s, err := uiApp.Start()
+		if err != nil {
+			return err
+		}
+		configYAML = s.ConfigYAML
+		if err := initSSHFromUIState(s.SSHState); err != nil {
+			return err
+		}
+	}
+
 	if restore, err := b.applyParams(); err != nil {
 		return err
 	} else {
@@ -177,15 +226,23 @@ func (b *ClusterBootstrapper) Bootstrap() error {
 		}
 	}
 
+	var metaConfig *config.MetaConfig
+	var err error
+	if configYAML == "" {
+		metaConfig, err = config.LoadConfigFromFile(app.ConfigPaths)
+		if err != nil {
+			return err
+		}
+	} else {
+		metaConfig, err = config.ParseConfigFromData(configYAML)
+		if err != nil {
+			return err
+		}
+	}
+
 	if app.ResourcesPath != "" {
 		log.WarnLn("--resources flag is deprecated. Please use --config flag multiple repeatedly for logical resources separation")
 		app.ConfigPaths = append(app.ConfigPaths, app.ResourcesPath)
-	}
-
-	// first, parse and check cluster config
-	metaConfig, err := config.LoadConfigFromFile(app.ConfigPaths)
-	if err != nil {
-		return err
 	}
 
 	if b.Params.NodeInterface == nil || reflect.ValueOf(b.Params.NodeInterface).IsNil() {
